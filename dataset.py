@@ -13,6 +13,7 @@ import random
 import numpy as np
 from torch.utils.data import Dataset
 from torch.utils.data import DataLoader
+from PIL import Image
 
 
 def create_dataloader(split, SR_rate, augment, batch_size=1, shuffle=False, num_workers=1, pin_memory=True,setName = 'DIV2K'):
@@ -22,6 +23,13 @@ def create_dataloader(split, SR_rate, augment, batch_size=1, shuffle=False, num_
         dataset = SET5(SR_rate)
     if(setName == 'Set14'):
         dataset = SET14(SR_rate)
+    if(setName == 'Urban100'):
+        dataset = URBAN100(SR_rate)
+    if(setName == 'BSD100'):
+        dataset = BSD100(SR_rate)
+    if(setName == 'Manga109'):
+        dataset = MANGA109(SR_rate)
+        
     dataloader = DataLoader(dataset, batch_size, shuffle=shuffle, num_workers=num_workers, pin_memory=pin_memory)
     return dataloader
     
@@ -51,9 +59,15 @@ class XLSR_Dataset(Dataset):
 
     def __getitem__(self, index):
         
+        HR_img = Image.open(os.path.join(self.HR_dir, self.img_names[index])).convert('RGB')
+        HR_size = HR_img.size
+        LR_size = (HR_size[0]//self.SR_rate, HR_size[1]//self.SR_rate)
+        HR_size = (LR_size[0]*self.SR_rate, LR_size[1]*self.SR_rate)
+        
+        LR_img = np.array(HR_img.resize(LR_size, Image.BICUBIC))[:,:,::-1] / 255.
+        HR_img = np.array(HR_img.resize(HR_size, Image.BICUBIC))[:,:,::-1] / 255.
+        
         if self.split == 'train':
-            LR_img = cv2.imread(os.path.join(self.LR_dir, self.img_names[index][:-4]+'x'+str(self.SR_rate)+'.png')) / 255.
-            HR_img = cv2.imread(os.path.join(self.HR_dir, self.img_names[index])) / 255.
             
             if self.augment:
                 # random crop
@@ -71,11 +85,6 @@ class XLSR_Dataset(Dataset):
                 intensity_scale = random.choice(self.intensity_list)
                 LR_img *= intensity_scale
                 HR_img *= intensity_scale
-            
-            
-        else:
-            LR_img = cv2.imread(os.path.join(self.LR_dir, self.img_names[index][:-4]+'x'+str(self.SR_rate)+'.png')) / 255.
-            HR_img = cv2.imread(os.path.join(self.HR_dir, self.img_names[index])) / 255.
         
         # Convert
         LR_img = np.ascontiguousarray(LR_img.transpose(2, 0, 1)) # HWC => CHW
@@ -107,34 +116,44 @@ class DIV2K(XLSR_Dataset):  # for training/testing
         else:
             raise NameError('data split must be "train", "valid" or "test". ')
 
-class SET5(XLSR_Dataset):  # for training/testing
+class SISR_Dataset(XLSR_Dataset):
     def __init__(self, SR_rate, augment=False):
         self.split = 'test'
         self.SR_rate = SR_rate
         self.augment = augment
         self.intensity_list = [1.0, 0.7, 0.5]
         self.crop_size = [32, 32]
-        
-        self.LR_dir = os.path.join('./Set5/Set5_LR', 'X'+str(SR_rate))
-        self.HR_dir = './Set5/Set5_HR'
+        self.HR_dir = self.get_HR_dir()
+        if(self.get_HR_dir() == None):assert('get_HR_dir() is not implemented')
         self.img_names = sorted(os.listdir(self.HR_dir))
+    
+    def get_HR_dir(self):
+        return None
 
-class SET14(XLSR_Dataset):  # for training/testing
-    def __init__(self, SR_rate, augment=False):
-        self.split = 'test'
-        self.SR_rate = SR_rate
-        self.augment = augment
-        self.intensity_list = [1.0, 0.7, 0.5]
-        self.crop_size = [32, 32]
+class SET5(SISR_Dataset):  # for training/testing
+    def get_HR_dir(self):
+        return './Set5'
         
-        self.LR_dir = os.path.join('./Set14/Set14_LR', 'X'+str(SR_rate))
-        self.HR_dir = './Set14/Set14_HR'
-        self.img_names = sorted(os.listdir(self.HR_dir))
 
+class SET14(SISR_Dataset):  # for training/testing
+    def get_HR_dir(self):
+        return './Set14'
+
+class BSD100(SISR_Dataset):  # for training/testing
+    def get_HR_dir(self):
+        return './BSD100'
+        
+class URBAN100(SISR_Dataset):  # for training/testing
+    def get_HR_dir(self):
+        return './Urban100'
+    
+class MANGA109(SISR_Dataset):  # for training/testing
+    def get_HR_dir(self):
+        return './Manga109'
 
 if __name__ == '__main__':
     os.makedirs('./test_dataloader/', exist_ok=True)
-    train_dataloader = create_dataloader('train', 3, False, batch_size=1, shuffle=False, num_workers=1)
+    train_dataloader = create_dataloader('test', 2, False, batch_size=1, shuffle=False, num_workers=1,setName='Set5')
     print(f"len(train): {len(train_dataloader)}")
     LR_img, HR_img, img_names = next(iter(train_dataloader))
     print(f"LR_img shape: {LR_img.size()}")

@@ -110,9 +110,12 @@ if __name__ == '__main__':
     model.to(device)
     model.eval()
     
-    test_dataloader = create_dataloader('test', opt.SR_rate, False, batch_size=1, shuffle=False, num_workers=1)
+    # test_dataloader = create_dataloader('test', opt.SR_rate, False, batch_size=1, shuffle=False, num_workers=1)
     # test_dataloader = create_dataloader('test', opt.SR_rate, False, batch_size=1, shuffle=False, num_workers=1,setName='Set5')
     # test_dataloader = create_dataloader('test', opt.SR_rate, False, batch_size=1, shuffle=False, num_workers=1,setName='Set14')
+    # test_dataloader = create_dataloader('test', opt.SR_rate, False, batch_size=1, shuffle=False, num_workers=1,setName='Urban100')
+    # test_dataloader = create_dataloader('test', opt.SR_rate, False, batch_size=1, shuffle=False, num_workers=1,setName='BSD100')
+    test_dataloader = create_dataloader('test', opt.SR_rate, False, batch_size=1, shuffle=False, num_workers=1,setName='Manga109')
            
     # evaluate
     pred_list, name_list = test(model, test_dataloader, device, txt_path)
