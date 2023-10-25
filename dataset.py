@@ -102,16 +102,13 @@ class DIV2K(XLSR_Dataset):  # for training/testing
         
         # data split
         if split == 'train':
-            self.LR_dir = os.path.join('./DIV2K/DIV2K_train_LR_bicubic', 'X'+str(SR_rate))
-            self.HR_dir = './DIV2K/DIV2K_train_HR'
+            self.HR_dir = r'D:\Research\VSR\XCAT\dataset\train'
             self.img_names = sorted(os.listdir(self.HR_dir))[:792]
         elif split == 'valid':
-            self.LR_dir = os.path.join('./DIV2K/DIV2K_train_LR_bicubic', 'X'+str(SR_rate))
-            self.HR_dir = './DIV2K/DIV2K_train_HR'
+            self.HR_dir = r'D:\Research\VSR\XCAT\dataset\train'
             self.img_names = sorted(os.listdir(self.HR_dir))[792:]
         elif split == 'test':
-            self.LR_dir = os.path.join('./DIV2K/DIV2K_valid_LR_bicubic', 'X'+str(SR_rate))
-            self.HR_dir = './DIV2K/DIV2K_valid_HR'
+            self.HR_dir = r'D:\Research\VSR\XCAT\dataset\valid'
             self.img_names = sorted(os.listdir(self.HR_dir))
         else:
             raise NameError('data split must be "train", "valid" or "test". ')
